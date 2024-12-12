@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Form</title>
+  <style>
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .form-group input {
+      padding: 8px;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  <script>
+    // ! <WASM HELPER JS CODE INSERTED HERE> !
+
+    // Destructure our validate user function from the WASM
+    const { validate_user } = wasm_bindgen;
+
+    // Base64 to array buffer function
+    function b642ab(base64) {
+      var binary_string = window.atob(base64);
+      var len = binary_string.length;
+      var bytes = new Uint8Array(len);
+      for (var i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelector("form").addEventListener("submit", async function (event) {
+        // Prevent default form submission behavour
+        event.preventDefault();
+
+        // Get user input
+        const user = document.getElementById("username").value;
+        const pass = document.getElementById("password").value;
+
+        // Validate user and password - if successful then file base64 is returned
+        await wasm_bindgen();
+        const fileb64 = await validate_user(user, pass);
+
+        if (fileb64 !== "") {
+          // Convert base64 to blob
+          const data = b642ab(fileb64);
+          const blob = new Blob([data], { type: "application/octet" });
+          const filename = "gotem.txt"
+
+          // Download the blob
+          if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveBlob(blob, filename);
+          } else {
+            const a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            const url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+          }
+        }
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <form action="/login" method="POST">
+      <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit">Sign In</button>
+    </form>
+  </div>
+</body>
+
+</html>
